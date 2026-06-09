@@ -1,0 +1,22 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Prevent directory browsing
+    Options -Indexes
+
+    # Block direct access to sensitive file patterns
+    RedirectMatch 404 /\.git
+    RedirectMatch 404 /\..*
+    RedirectMatch 404 \.(md|sql|json|yaml|yml|log|lock|env|ini|sh|bak)$
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller If File/Folder Doesn't Exist
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>

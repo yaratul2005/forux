@@ -1,0 +1,25 @@
+# Environment configuration
+/config/config.php
+
+# Installer lock
+/storage/installed.lock
+
+# Cached settings and views
+/storage/cache/*
+!/storage/cache/.gitkeep
+
+# Error logs
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# Session files
+/storage/sessions/*
+!/storage/sessions/.gitkeep
+
+# Uploaded content
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+
+# Local OS files
+.DS_Store
+Thumbs.db
