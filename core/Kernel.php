@@ -110,6 +110,11 @@ class Kernel
         $this->container->singleton(Settings::class, function ($c) {
             return new Settings($c);
         });
+
+        // Bind HtmlSanitizer as a singleton
+        $this->container->singleton(HtmlSanitizer::class, function () {
+            return new HtmlSanitizer();
+        });
     }
 
     /**
