@@ -35,7 +35,7 @@ class MessagingController
     protected function requireAuth(): ?Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('login');
+            return Response::redirect('/login');
         }
         return null;
     }
@@ -156,7 +156,7 @@ class MessagingController
 
             $this->pdo->commit();
 
-            return Response::redirect("messages/{$convId}");
+            return Response::redirect("/messages/{$convId}");
 
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
@@ -276,7 +276,7 @@ class MessagingController
             // Update conversation timestamp
             $this->pdo->prepare("UPDATE private_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$id]);
 
-            return Response::redirect("messages/{$id}");
+            return Response::redirect("/messages/{$id}");
 
         } catch (Throwable $e) {
             return $this->showConversation($id, $e->getMessage());

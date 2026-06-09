@@ -30,7 +30,7 @@ class AuthController
     public function showLogin(?string $error = null, ?string $success = null): Response
     {
         if ($this->auth->check()) {
-            return Response::redirect('settings'); // Redirect to profile settings if already logged in
+            return Response::redirect('/settings'); // Redirect to profile settings if already logged in
         }
 
         return \Core\View::render('login', [
@@ -51,7 +51,7 @@ class AuthController
         try {
             $this->auth->login($email, $password);
             // On success, redirect to profile settings
-            return Response::redirect('settings');
+            return Response::redirect('/settings');
         } catch (Throwable $e) {
             return $this->showLogin($e->getMessage());
         }
@@ -63,7 +63,7 @@ class AuthController
     public function showRegister(?string $error = null): Response
     {
         if ($this->auth->check()) {
-            return Response::redirect('settings');
+            return Response::redirect('/settings');
         }
 
         return \Core\View::render('register', [
@@ -93,7 +93,7 @@ class AuthController
             
             // Auto-login after registration
             $this->auth->login($email, $password);
-            return Response::redirect('settings');
+            return Response::redirect('/settings');
         } catch (Throwable $e) {
             return $this->showRegister($e->getMessage());
         }
@@ -105,7 +105,7 @@ class AuthController
     public function logout(): Response
     {
         $this->auth->logout();
-        return Response::redirect('login');
+        return Response::redirect('/login');
     }
 
     /**

@@ -1,6 +1,5 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    # RewriteBase /
 
     # Prevent directory browsing
     Options -Indexes
@@ -15,10 +14,16 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Route /themes/* requests through index.php (for theme asset serving
+    # when public/ is the document root on shared hosting)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_URI} ^/themes/
+    RewriteRule ^ index.php [L,QSA]
+
     # Send Requests To Front Controller If File/Folder Doesn't Exist
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    RewriteRule ^ index.php [L,QSA]
 </IfModule>
 
 # GZIP/Deflate compression

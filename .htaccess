@@ -5,20 +5,24 @@
     # Prevent directory browsing
     Options -Indexes
 
-    # Block direct access to internal php/code directories
-    RewriteRule ^(app|core|modules|storage|config|lang)/.*$ - [F,L]
+    # Block direct access to internal PHP/code directories
+    RewriteRule ^(app|core|modules|storage|config|lang|install)/.*$ - [F,L]
 
-    # Block direct access to PHP templates in themes/ (but allow assets)
+    # Block direct access to PHP templates inside themes/ (assets are allowed)
     RewriteRule ^themes/.*\.php$ - [F,L]
 
-    # Block direct access to sensitive file patterns
+    # Block access to hidden files and sensitive extensions
     RedirectMatch 404 /\.git
     RedirectMatch 404 /\..*
-    RedirectMatch 404 \.(md|sql|json|yaml|yml|log|lock|env|ini|sh|bak)$
+    RedirectMatch 404 \.(md|sql|yaml|yml|log|lock|env|ini|sh|bak)$
 
-    # Send requests to the public/ directory transparently if they don't match a real file/folder
+    # Allow direct access to theme ASSET files (JS, CSS, images, fonts)
+    # These exist on the filesystem, so mod_rewrite will skip them
+    # (RewriteCond %{REQUEST_FILENAME} -f catches them before any rewrite)
+
+    # Route all other requests to the public/ front controller
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteRule ^(.*)$ public/index.php [L,QSA]
 </IfModule>

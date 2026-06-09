@@ -70,7 +70,7 @@ class UserController
     {
         // Require Authentication
         if (!$this->auth->check()) {
-            return Response::redirect('login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();
@@ -89,7 +89,7 @@ class UserController
     public function updateSettings(): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();

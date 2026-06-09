@@ -102,7 +102,7 @@ class ForumController
     public function createThreadForm(int $categoryId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../login');
+            return Response::redirect('/login');
         }
 
         return \Core\View::render('new_thread', [
@@ -117,7 +117,7 @@ class ForumController
     public function createThread(int $categoryId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();
@@ -126,7 +126,7 @@ class ForumController
 
         try {
             $slug = $this->forumService->createThread($categoryId, $user['id'], $title, $body);
-            return Response::redirect('../thread/' . $slug);
+            return Response::redirect('/thread/' . $slug);
         } catch (Throwable $e) {
             return \Core\View::render('error', [
                 'title' => 'Error Creating Thread',
@@ -141,7 +141,7 @@ class ForumController
     public function createReply(int $threadId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../../login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();
@@ -149,7 +149,8 @@ class ForumController
 
         try {
             $this->forumService->createReply($threadId, $user['id'], $body);
-            return Response::redirect($_SERVER['HTTP_REFERER'] ?? '../../index.php');
+            $referer = $_SERVER['HTTP_REFERER'] ?? null;
+            return Response::redirect($referer ?: '/');
         } catch (Throwable $e) {
             return \Core\View::render('error', [
                 'title' => 'Error Submitting Reply',
@@ -164,7 +165,7 @@ class ForumController
     public function editPostForm(int $postId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../../login');
+            return Response::redirect('/login');
         }
 
         $container = \Core\Container::getInstance();
@@ -194,7 +195,7 @@ class ForumController
     public function updatePost(int $postId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../../login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();
@@ -209,7 +210,7 @@ class ForumController
             $stmt->execute([$postId]);
             $slug = $stmt->fetchColumn();
 
-            return Response::redirect('../../thread/' . $slug);
+            return Response::redirect('/thread/' . $slug);
         } catch (Throwable $e) {
             return \Core\View::render('error', [
                 'title' => 'Error Updating Post',
@@ -224,7 +225,7 @@ class ForumController
     public function deletePost(int $postId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../../login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();
@@ -244,7 +245,8 @@ class ForumController
 
         try {
             $this->forumService->deletePost($postId);
-            return Response::redirect($_SERVER['HTTP_REFERER'] ?? '../../index.php');
+            $referer = $_SERVER['HTTP_REFERER'] ?? null;
+            return Response::redirect($referer ?: '/');
         } catch (Throwable $e) {
             return \Core\View::render('error', [
                 'title' => 'Error',
@@ -259,7 +261,7 @@ class ForumController
     public function react(int $postId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../../login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();
@@ -267,7 +269,8 @@ class ForumController
 
         try {
             $this->forumService->toggleReaction($user['id'], $postId, $reactionType);
-            return Response::redirect($_SERVER['HTTP_REFERER'] ?? '../../index.php');
+            $referer = $_SERVER['HTTP_REFERER'] ?? null;
+            return Response::redirect($referer ?: '/');
         } catch (Throwable $e) {
             return \Core\View::render('error', [
                 'title' => 'Error',
@@ -282,7 +285,7 @@ class ForumController
     public function reportPost(int $postId): Response
     {
         if (!$this->auth->check()) {
-            return Response::redirect('../../login');
+            return Response::redirect('/login');
         }
 
         $user = $this->auth->user();
@@ -297,7 +300,8 @@ class ForumController
 
         try {
             $this->forumService->reportPost($user['id'], $postId, $reason);
-            return Response::redirect($_SERVER['HTTP_REFERER'] ?? '../../index.php');
+            $referer = $_SERVER['HTTP_REFERER'] ?? null;
+            return Response::redirect($referer ?: '/');
         } catch (Throwable $e) {
             return \Core\View::render('error', [
                 'title' => 'Error',
