@@ -15,12 +15,14 @@ require_once ROOT_PATH . '/core/Autoloader.php';
 \Core\Autoloader::addNamespace('App', ROOT_PATH . '/app');
 \Core\Autoloader::addNamespace('Modules', ROOT_PATH . '/modules');
 
-// Check for installation lock (Temporarily warning instead of redirect for Kernel testing)
+// Check for installation lock
 $installed = file_exists(ROOT_PATH . '/storage/installed.lock');
 if (!$installed && !isset($_GET['test'])) {
     if (file_exists(ROOT_PATH . '/install/index.php')) {
-        header('Location: /install/index.php');
+        require_once ROOT_PATH . '/install/index.php';
         exit;
+    } else {
+        die('Forux is not installed, and the installation wizard was not found. Please upload the install/ folder.');
     }
 }
 

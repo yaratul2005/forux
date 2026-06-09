@@ -92,6 +92,24 @@ class Kernel
 
         // Bind Kernel
         $this->container->instance(Kernel::class, $this);
+
+        // Bind Database (PDO) if installed
+        if (file_exists(ROOT_PATH . '/storage/installed.lock') && !empty($this->config['db'])) {
+            $db = $this->config['db'];
+            $this->container->singleton(\PDO::class, function () use ($db) {
+                $dsn = "mysql:host={$db['host']};port={$db['port']};dbname={$db['database']};charset={$db['charset']}";
+                return new \PDO($dsn, $db['username'], $db['password'], [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                    \PDO::ATTR_EMULATE_PREPARES => false,
+                ]);
+            });
+        }
+
+        // Bind Settings as a singleton
+        $this->container->singleton(Settings::class, function ($c) {
+            return new Settings($c);
+        });
     }
 
     /**
