@@ -174,8 +174,10 @@ class Container
             if ($type && !$type->isBuiltin()) {
                 $dependencies[] = $this->get($type->getName());
             } else {
-                // If it's a built-in type or untyped, check for default value
-                if ($parameter->isDefaultValueAvailable()) {
+                // Check if the parameter name is bound as a service key
+                if ($this->has($parameter->getName())) {
+                    $dependencies[] = $this->get($parameter->getName());
+                } elseif ($parameter->isDefaultValueAvailable()) {
                     $dependencies[] = $parameter->getDefaultValue();
                 } else {
                     throw new Exception("Unresolvable dependency [{$parameter->getName()}] in class {$parameter->getDeclaringClass()->getName()}");

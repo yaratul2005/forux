@@ -117,8 +117,9 @@ class Kernel
      */
     protected function loadModules(): void
     {
-        // TODO: In Phase 5, read database settings and dynamically bootstrap active modules.
-        // For Phase 2, we will manually load any static module routes if they exist.
+        $moduleManager = new ModuleManager($this->container);
+        $this->container->instance(ModuleManager::class, $moduleManager);
+        $moduleManager->boot();
     }
 
     /**
