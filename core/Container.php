@@ -20,6 +20,37 @@ class Container
     protected array $instances = [];
 
     /**
+     * The global container instance.
+     *
+     * @var Container|null
+     */
+    protected static ?Container $instance = null;
+
+    /**
+     * Get the globally available container instance.
+     *
+     * @return Container
+     */
+    public static function getInstance(): Container
+    {
+        if (static::$instance === null) {
+            static::$instance = new static();
+        }
+        return static::$instance;
+    }
+
+    /**
+     * Set the globally available container instance.
+     *
+     * @param Container|null $container
+     * @return void
+     */
+    public static function setInstance(?Container $container): void
+    {
+        static::$instance = $container;
+    }
+
+    /**
      * The container's bindings.
      *
      * @var array
@@ -45,6 +76,8 @@ class Container
             'concrete' => $concrete,
             'shared' => $shared
         ];
+
+        unset($this->instances[$abstract]);
     }
 
     /**

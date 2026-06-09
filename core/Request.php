@@ -26,8 +26,8 @@ class Request
         array $files = [],
         array $server = []
     ) {
-        $this->query = $this->sanitize($query);
-        $this->post = $this->sanitize($post);
+        $this->query = $query;
+        $this->post = $post;
         $this->cookies = $cookies;
         $this->files = $files;
         $this->server = $server;
@@ -115,7 +115,7 @@ class Request
      * @param mixed $data
      * @return mixed
      */
-    protected function sanitize($data)
+    public function sanitize($data)
     {
         if (is_array($data)) {
             foreach ($data as $key => $value) {

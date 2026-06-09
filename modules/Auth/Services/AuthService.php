@@ -162,12 +162,38 @@ class AuthService
      */
     public function login(string $email, string $password): bool
     {
+        // 1. IP Lockout Check
+        $ip = $this->request->ip();
+        $blockFile = ROOT_PATH . '/storage/logs/rate_limits/block_' . md5($ip) . '.json';
+        if (file_exists($blockFile)) {
+            $blockData = json_decode(file_get_contents($blockFile), true);
+            if ($blockData && $blockData['blocked_until'] > time()) {
+                throw new Exception("Too many failed login attempts. Your IP is temporarily blocked.");
+            } else {
+                @unlink($blockFile); // Block expired
+            }
+        }
+
         // Retrieve user
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
+            if ($user) {
+                // Check if this is an admin account to track failed logins
+                $stmtRole = $this->pdo->prepare("
+                    SELECT r.name FROM user_roles ur
+                    JOIN roles r ON ur.role_id = r.id
+                    WHERE ur.user_id = ?
+                ");
+                $stmtRole->execute([$user['id']]);
+                $roles = $stmtRole->fetchAll(PDO::FETCH_COLUMN) ?: [];
+                $isAdmin = in_array('Admin', $roles) || in_array('Super Admin', $roles);
+                if ($isAdmin) {
+                    $this->logFailedAdminLogin($email);
+                }
+            }
             throw new Exception("Invalid login credentials.");
         }
 
@@ -175,8 +201,17 @@ class AuthService
             throw new Exception("Your account is currently " . $user['status'] . ".");
         }
 
+        // 2. Session Rotation: Destroy previous session if any
+        $cookieName = $this->config['session']['name'] ?? 'forux_session';
+        $oldToken = $this->request->cookie($cookieName);
+        if ($oldToken) {
+            $this->destroySession($oldToken);
+        }
+
         // Generate session token
         $token = bin2hex(random_bytes(32)); // 64 chars
+        $csrfToken = bin2hex(random_bytes(16)); // Generate new CSRF token on login
+        $payload = json_encode(['_csrf_token' => $csrfToken]);
 
         // Save session in DB
         $stmt = $this->pdo->prepare("
@@ -188,12 +223,11 @@ class AuthService
             $user['id'],
             $this->request->ip(),
             substr($this->request->header('User-Agent', ''), 0, 255),
-            '{}',
+            $payload,
             time()
         ]);
 
         // Send Session Cookie
-        $cookieName = $this->config['session']['name'] ?? 'forux_session';
         $lifetime = $this->config['session']['lifetime'] ?? 86400;
         $expire = time() + $lifetime;
         
@@ -249,6 +283,114 @@ class AuthService
             $stmt->execute([$token]);
         } catch (\Throwable $e) {
             // Fail silently
+        }
+    }
+
+    /**
+     * Get the active CSRF token for the session.
+     * Generates one if it doesn't exist.
+     *
+     * @return string
+     */
+    public function getCsrfToken(): string
+    {
+        $sessionCookieName = $this->config['session']['name'] ?? 'forux_session';
+        $token = $this->request->cookie($sessionCookieName);
+        $now = time();
+
+        if ($token) {
+            $stmt = $this->pdo->prepare("SELECT id, payload, last_activity FROM user_sessions WHERE id = ?");
+            $stmt->execute([$token]);
+            $session = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($session) {
+                $payload = json_decode($session['payload'], true) ?: [];
+                if (!empty($payload['_csrf_token'])) {
+                    return $payload['_csrf_token'];
+                }
+                
+                $csrfToken = bin2hex(random_bytes(16));
+                $payload['_csrf_token'] = $csrfToken;
+                $stmtUpdate = $this->pdo->prepare("UPDATE user_sessions SET payload = ? WHERE id = ?");
+                $stmtUpdate->execute([json_encode($payload), $token]);
+                return $csrfToken;
+            }
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $csrfToken = bin2hex(random_bytes(16));
+        $payload = ['_csrf_token' => $csrfToken];
+
+        $stmtInsert = $this->pdo->prepare("
+            INSERT INTO user_sessions (id, user_id, ip_address, user_agent, payload, last_activity)
+            VALUES (?, NULL, ?, ?, ?, ?)
+        ");
+        $stmtInsert->execute([
+            $token,
+            $this->request->ip(),
+            substr($this->request->header('User-Agent', ''), 0, 255),
+            json_encode($payload),
+            $now
+        ]);
+
+        $lifetime = $this->config['session']['lifetime'] ?? 86400;
+        $expire = $now + $lifetime;
+        
+        $response = new Response();
+        $response->setCookie(
+            $sessionCookieName,
+            $token,
+            $expire,
+            '/',
+            '',
+            $this->config['session']['secure'] ?? false,
+            $this->config['session']['httponly'] ?? true,
+            $this->config['session']['samesite'] ?? 'Strict'
+        );
+
+        return $csrfToken;
+    }
+
+    /**
+     * Log failed admin login attempt and temporarily block IP if threshold exceeded.
+     */
+    protected function logFailedAdminLogin(string $email): void
+    {
+        $ip = $this->request->ip();
+        $logDir = ROOT_PATH . '/storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        $logFile = $logDir . '/security.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $msg = "[{$timestamp}] SECURITY WARNING: Failed admin login attempt for {$email} from IP {$ip}\n";
+        file_put_contents($logFile, $msg, FILE_APPEND);
+
+        $rateLimitsDir = $logDir . '/rate_limits';
+        if (!is_dir($rateLimitsDir)) {
+            mkdir($rateLimitsDir, 0755, true);
+        }
+        $attemptsFile = $rateLimitsDir . '/attempts_' . md5($ip) . '.json';
+        $attempts = [];
+        if (file_exists($attemptsFile)) {
+            $attempts = json_decode(file_get_contents($attemptsFile), true) ?: [];
+        }
+        $now = time();
+        $attempts = array_filter($attempts, function($t) use ($now) {
+            return $t > $now - 900;
+        });
+        $attempts[] = $now;
+        file_put_contents($attemptsFile, json_encode(array_values($attempts)));
+
+        if (count($attempts) >= 5) {
+            $blockFile = $rateLimitsDir . '/block_' . md5($ip) . '.json';
+            $blockData = ['blocked_until' => $now + 900];
+            file_put_contents($blockFile, json_encode($blockData));
+            
+            $msgBlock = "[{$timestamp}] SECURITY ALERT: IP {$ip} has been temporarily blocked for 15 minutes due to excessive failed admin logins.\n";
+            file_put_contents($logFile, $msgBlock, FILE_APPEND);
+            
+            throw new Exception("Too many failed login attempts. Your IP has been temporarily blocked.");
         }
     }
 }

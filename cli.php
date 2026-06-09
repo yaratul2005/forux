@@ -192,15 +192,23 @@ function rollbackMigrations(): void
 function clearCache(): void
 {
     echo "Clearing cache...\n";
-    $cacheDir = ROOT_PATH . '/storage/cache';
-    $files = glob($cacheDir . '/*');
+    $cacheDirs = [
+        ROOT_PATH . '/storage/cache',
+        ROOT_PATH . '/storage/cache/partials'
+    ];
     
     $count = 0;
-    foreach ($files as $file) {
-        if (basename($file) !== '.gitkeep') {
-            if (is_file($file)) {
-                unlink($file);
-                $count++;
+    foreach ($cacheDirs as $cacheDir) {
+        if (!is_dir($cacheDir)) {
+            continue;
+        }
+        $files = glob($cacheDir . '/*');
+        foreach ($files as $file) {
+            if (basename($file) !== '.gitkeep') {
+                if (is_file($file)) {
+                    unlink($file);
+                    $count++;
+                }
             }
         }
     }

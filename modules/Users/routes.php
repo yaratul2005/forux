@@ -5,3 +5,6 @@
 $router->get('/user/{username}', [\Modules\Users\Controllers\UserController::class, 'profile']);
 $router->get('/settings', [\Modules\Users\Controllers\UserController::class, 'settings']);
 $router->post('/settings', [\Modules\Users\Controllers\UserController::class, 'updateSettings']);
+
+// API endpoints
+$router->get('/api/users/search', [\Modules\Users\Controllers\UserController::class, 'search']);

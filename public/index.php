@@ -28,4 +28,6 @@ if (!$installed && !isset($_GET['test'])) {
 
 // Instantiate and handle the request
 $kernel = new Core\Kernel();
+$kernel->addMiddleware(\App\Middleware\RateLimitMiddleware::class);
+$kernel->addMiddleware(\App\Middleware\CsrfMiddleware::class);
 $kernel->handle();

@@ -20,6 +20,7 @@ class Kernel
     public function __construct()
     {
         $this->container = new Container();
+        Container::setInstance($this->container);
         $this->container->instance(Container::class, $this->container);
 
         $this->bootstrap();
@@ -115,6 +116,9 @@ class Kernel
         $this->container->singleton(HtmlSanitizer::class, function () {
             return new HtmlSanitizer();
         });
+
+        // Register dynamic services from the Credentials Vault
+        \App\Services\ServiceBootstrap::register($this->container);
     }
 
     /**

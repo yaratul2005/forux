@@ -16,3 +16,6 @@ $router->post('/post/edit/{id:\d+}', [\Modules\Forum\Controllers\ForumController
 
 $router->post('/post/delete/{id:\d+}', [\Modules\Forum\Controllers\ForumController::class, 'deletePost']);
 $router->post('/post/react/{id:\d+}', [\Modules\Forum\Controllers\ForumController::class, 'react']);
+
+// API endpoints
+$router->post('/api/upload', [\App\Controllers\UploadController::class, 'upload']);

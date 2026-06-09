@@ -20,3 +20,30 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# GZIP/Deflate compression
+<IfModule mod_deflate.c>
+    # Compress standard text and static code assets
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml text/javascript application/javascript application/x-javascript application/json application/xml
+</IfModule>
+
+# Browser Caching (Expires Headers)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Default expiry
+    ExpiresDefault "access plus 1 month"
+    
+    # Specific MIME types
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+    
+    # Image types
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+</IfModule>

@@ -92,6 +92,27 @@ class Response
     }
 
     /**
+     * Get all response headers.
+     *
+     * @return array
+     */
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    /**
+     * Get a specific header.
+     *
+     * @param string $name
+     * @return string|null
+     */
+    public function getHeader(string $name): ?string
+    {
+        return $this->headers[$name] ?? null;
+    }
+
+    /**
      * Set a header.
      *
      * @param string $name
@@ -128,14 +149,16 @@ class Response
         string $samesite = 'Strict'
     ): self {
         // PHP 7.3+ supports samesite option array
-        setcookie($name, $value, [
-            'expires' => $expire,
-            'path' => $path,
-            'domain' => $domain,
-            'secure' => $secure,
-            'httponly' => $httponly,
-            'samesite' => $samesite
-        ]);
+        if (!headers_sent()) {
+            setcookie($name, $value, [
+                'expires' => $expire,
+                'path' => $path,
+                'domain' => $domain,
+                'secure' => $secure,
+                'httponly' => $httponly,
+                'samesite' => $samesite
+            ]);
+        }
         return $this;
     }
 

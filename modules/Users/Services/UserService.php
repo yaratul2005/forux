@@ -86,4 +86,30 @@ class UserService
             return false;
         }
     }
+
+    /**
+     * Search users by prefix query for autocompletes.
+     *
+     * @param string $query
+     * @param int $limit
+     * @return array
+     */
+    public function searchUsers(string $query, int $limit = 10): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT id, username, email, avatar_url 
+                FROM users 
+                WHERE username LIKE ? AND deleted_at IS NULL
+                LIMIT ?
+            ");
+            $like = $query . '%';
+            $stmt->bindParam(1, $like, PDO::PARAM_STR);
+            $stmt->bindParam(2, $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
 }
