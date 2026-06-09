@@ -24,6 +24,11 @@
             --font-family: 'Outfit', system-ui, -apple-system, sans-serif;
         }
 
+        *:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
         body {
             background-color: var(--bg-color);
             background-image: radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
@@ -34,6 +39,8 @@
             padding: 0;
             box-sizing: border-box;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Glassmorphism Navigation */
@@ -135,8 +142,11 @@
 
         .wrapper {
             max-width: 1150px;
+            width: 100%;
             margin: 2rem auto;
             padding: 0 1.5rem;
+            flex: 1 0 auto;
+            box-sizing: border-box;
         }
 
         /* Common Elements styling */
@@ -249,14 +259,14 @@
         
         <div class="nav-search">
             <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <input type="text" placeholder="Search threads..." id="nav-search-input">
+            <input type="text" placeholder="Search threads..." id="nav-search-input" aria-label="Search threads">
         </div>
 
         <div class="nav-links">
             <a href="<?= $baseUrl ?>/">Forum</a>
             <?php if ($currentUser): ?>
                 <a href="<?= $baseUrl ?>/settings">Settings</a>
-                <a href="#" style="position: relative;" id="notification-bell">
+                <a href="#" style="position: relative;" id="notification-bell" aria-label="View notifications">
                     Notifications
                     <span class="badge" id="notification-badge" style="display: <?= $unreadNotificationsCount > 0 ? 'inline-block' : 'none' ?>;">
                         <?= $unreadNotificationsCount ?>
@@ -266,7 +276,7 @@
                     <a href="<?= $baseUrl ?>/<?= $adminPath ?>/dashboard" style="color: #60a5fa;">Admin Control</a>
                 <?php endif; ?>
                 <form action="<?= $baseUrl ?>/logout" method="POST" style="display: inline; margin: 0;">
-                    <button type="submit" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-family: inherit; font-size: 0.9rem; font-weight: 500; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
+                    <button type="submit" aria-label="Log out of account" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-family: inherit; font-size: 0.9rem; font-weight: 500; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
                         Logout
                     </button>
                 </form>
@@ -280,6 +290,21 @@
     <div class="wrapper">
         <?= $content ?>
     </div>
+
+    <footer style="margin-top: auto; padding: 2.5rem 0; border-top: 1px solid var(--glass-border); text-align: center; font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 0.65rem; background: rgba(11, 15, 25, 0.5); backdrop-filter: blur(8px);">
+        <div>&copy; <?= date('Y') ?> Forux Forum. All rights reserved.</div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <span><?= __('common.language') ?>:</span>
+            <?php
+            $currentLocale = \Core\Language::getInstance()->getLocale();
+            ?>
+            <a href="?lang=en" style="color: <?= $currentLocale === 'en' ? 'var(--primary)' : 'var(--text-muted)' ?>; text-decoration: none; font-weight: <?= $currentLocale === 'en' ? '700' : 'normal' ?>;">English</a>
+            <span style="color: var(--glass-border);">|</span>
+            <a href="?lang=es" style="color: <?= $currentLocale === 'es' ? 'var(--primary)' : 'var(--text-muted)' ?>; text-decoration: none; font-weight: <?= $currentLocale === 'es' ? '700' : 'normal' ?>;">Español</a>
+            <span style="color: var(--glass-border);">|</span>
+            <a href="?lang=fr" style="color: <?= $currentLocale === 'fr' ? 'var(--primary)' : 'var(--text-muted)' ?>; text-decoration: none; font-weight: <?= $currentLocale === 'fr' ? '700' : 'normal' ?>;">Français</a>
+        </div>
+    </footer>
 
     <!-- Pass base URL dynamically to JavaScript -->
     <script>

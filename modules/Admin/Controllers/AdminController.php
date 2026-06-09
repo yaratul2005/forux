@@ -52,6 +52,22 @@ class AdminController
         $reportsCount = $this->pdo->query("SELECT COUNT(*) FROM reports WHERE status = 'open'")->fetchColumn();
         $sessionsCount = $this->pdo->query("SELECT COUNT(*) FROM user_sessions")->fetchColumn();
 
+        // Detect latest migration schema version
+        $latestMigration = 'v000 (Initial)';
+        try {
+            $stmt = $this->pdo->query("SELECT migration FROM migrations ORDER BY id DESC LIMIT 1");
+            $lastMigrationName = $stmt->fetchColumn();
+            if ($lastMigrationName) {
+                if (preg_match('/^(\d+)_(.+)\.php$/', $lastMigrationName, $matches)) {
+                    $latestMigration = "v" . $matches[1] . " (" . str_replace('_', ' ', $matches[2]) . ")";
+                } else {
+                    $latestMigration = $lastMigrationName;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Table doesn't exist yet
+        }
+
         // 2. Fetch recent activity details
         $recentUsers = $this->pdo->query("SELECT id, username, email, created_at FROM users WHERE deleted_at IS NULL ORDER BY id DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
         $recentReports = $this->pdo->query("SELECT r.*, u.username FROM reports r JOIN users u ON r.user_id = u.id ORDER BY r.id DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
@@ -91,6 +107,13 @@ class AdminController
                 <div class='stat-info'>
                     <div class='stat-num'>{$sessionsCount}</div>
                     <div class='stat-label'>Active Sessions</div>
+                </div>
+            </div>
+            <div class='stat-card'>
+                <div class='stat-icon'>⚙️</div>
+                <div class='stat-info'>
+                    <div class='stat-num' style='font-size:0.95rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;' title='{$latestMigration}'>{$latestMigration}</div>
+                    <div class='stat-label'>Schema Version</div>
                 </div>
             </div>
         </div>

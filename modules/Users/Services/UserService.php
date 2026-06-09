@@ -29,7 +29,7 @@ class UserService
     {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT id, username, email, avatar_url, bio, location, reputation_points, status, created_at 
+                SELECT id, username, email, avatar_url, bio, location, reputation_points, status, language, created_at 
                 FROM users 
                 WHERE username = ? AND deleted_at IS NULL
             ");
@@ -51,7 +51,7 @@ class UserService
     {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT id, username, email, avatar_url, bio, location, reputation_points, status, created_at 
+                SELECT id, username, email, avatar_url, bio, location, reputation_points, status, language, created_at 
                 FROM users 
                 WHERE id = ? AND deleted_at IS NULL
             ");
@@ -74,14 +74,15 @@ class UserService
     {
         $bio = $data['bio'] ?? null;
         $location = $data['location'] ?? null;
+        $language = $data['language'] ?? 'en';
 
         try {
             $stmt = $this->pdo->prepare("
                 UPDATE users 
-                SET bio = ?, location = ?, updated_at = CURRENT_TIMESTAMP 
+                SET bio = ?, location = ?, language = ?, updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ? AND deleted_at IS NULL
             ");
-            return $stmt->execute([$bio, $location, $userId]);
+            return $stmt->execute([$bio, $location, $language, $userId]);
         } catch (\Throwable $e) {
             return false;
         }

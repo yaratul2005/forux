@@ -91,6 +91,10 @@ class Kernel
         $router = new Router();
         $this->container->instance(Router::class, $router);
 
+        // Bind Language system as a singleton
+        $language = new Language($this->container);
+        $this->container->instance(Language::class, $language);
+
         // Bind Kernel
         $this->container->instance(Kernel::class, $this);
 

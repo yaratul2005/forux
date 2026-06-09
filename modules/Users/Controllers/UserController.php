@@ -79,13 +79,29 @@ class UserController
         $user = $this->auth->user();
         $location = trim($this->request->input('location', ''));
         $bio = trim($this->request->input('bio', ''));
+        $language = trim($this->request->input('language', 'en'));
+
+        if (!in_array($language, ['en', 'es', 'fr'], true)) {
+            $language = 'en';
+        }
 
         try {
             $this->userService->updateProfile($user['id'], [
                 'location' => $location,
-                'bio' => $bio
+                'bio' => $bio,
+                'language' => $language
             ]);
-            return $this->settings(null, 'Profile successfully updated.');
+
+            // Set language cookie and update runtime locale
+            if (!headers_sent()) {
+                setcookie('forux_lang', $language, time() + 86400 * 365, '/', '', false, true);
+            }
+            $langManager = \Core\Language::getInstance();
+            if ($langManager) {
+                $langManager->setLocale($language);
+            }
+
+            return $this->settings(null, __('common.profile_updated', ['default' => 'Profile successfully updated.']));
         } catch (Throwable $e) {
             return $this->settings($e->getMessage());
         }

@@ -1,6 +1,6 @@
 <div class="settings-container font-standard">
     <div class="card settings-card">
-        <h2>Profile Settings</h2>
+        <h2><?= __('common.settings') ?></h2>
         
         <?php if (!empty($error)): ?>
             <div class="alert">
@@ -35,8 +35,17 @@
                 <label for="bio">About Me (Bio)</label>
                 <textarea id="bio" name="bio" class="form-control" rows="5" placeholder="Tell the community about yourself..."><?= htmlspecialchars($user['bio'] ?? '') ?></textarea>
             </div>
+
+            <div class="form-group">
+                <label for="language"><?= __('common.language') ?></label>
+                <select id="language" name="language" class="form-control">
+                    <option value="en" <?= ($user['language'] ?? 'en') === 'en' ? 'selected' : '' ?>>English</option>
+                    <option value="es" <?= ($user['language'] ?? 'en') === 'es' ? 'selected' : '' ?>>Español</option>
+                    <option value="fr" <?= ($user['language'] ?? 'en') === 'fr' ? 'selected' : '' ?>>Français</option>
+                </select>
+            </div>
             
-            <button type="submit" class="btn btn-primary btn-block">Save Profile</button>
+            <button type="submit" class="btn btn-primary btn-block"><?= __('common.submit') ?></button>
         </form>
 
         <div class="settings-footer">

@@ -5,6 +5,7 @@ namespace Modules\Forum\Services;
 use PDO;
 use Exception;
 use Core\HtmlSanitizer;
+use Core\Hook;
 
 /**
  * Service managing Forum Categories, Threads, Posts, and Reactions
@@ -13,14 +14,16 @@ class ForumService
 {
     protected PDO $pdo;
     protected HtmlSanitizer $sanitizer;
+    protected Hook $hook;
 
     /**
      * Create a new ForumService instance.
      */
-    public function __construct(PDO $pdo, HtmlSanitizer $sanitizer)
+    public function __construct(PDO $pdo, HtmlSanitizer $sanitizer, Hook $hook)
     {
         $this->pdo = $pdo;
         $this->sanitizer = $sanitizer;
+        $this->hook = $hook;
     }
 
     /**
@@ -207,6 +210,15 @@ class ForumService
             $stmtPost->execute([$threadId, $userId, $cleanBody]);
 
             $this->pdo->commit();
+
+            $this->hook->doAction('forum.thread_created', [
+                'thread_id' => $threadId,
+                'category_id' => $categoryId,
+                'user_id' => $userId,
+                'title' => $cleanTitle,
+                'slug' => $slug
+            ]);
+
             return $slug;
         } catch (\Throwable $e) {
             $this->pdo->rollBack();
@@ -230,7 +242,16 @@ class ForumService
             VALUES (?, ?, ?, 0)
         ");
         $stmt->execute([$threadId, $userId, $cleanBody]);
-        return (int)$this->pdo->lastInsertId();
+        $replyId = (int)$this->pdo->lastInsertId();
+
+        $this->hook->doAction('forum.reply_created', [
+            'post_id' => $replyId,
+            'thread_id' => $threadId,
+            'user_id' => $userId,
+            'body' => $cleanBody
+        ]);
+
+        return $replyId;
     }
 
     /**
@@ -272,6 +293,13 @@ class ForumService
             $stmtUpdate->execute([$cleanBody, $postId]);
 
             $this->pdo->commit();
+
+            $this->hook->doAction('forum.post_updated', [
+                'post_id' => $postId,
+                'user_id' => $userId,
+                'body' => $cleanBody
+            ]);
+
             return true;
         } catch (\Throwable $e) {
             $this->pdo->rollBack();
@@ -285,7 +313,13 @@ class ForumService
     public function deletePost(int $postId): bool
     {
         $stmt = $this->pdo->prepare("UPDATE posts SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?");
-        return $stmt->execute([$postId]);
+        $result = $stmt->execute([$postId]);
+        if ($result) {
+            $this->hook->doAction('forum.post_deleted', [
+                'post_id' => $postId
+            ]);
+        }
+        return $result;
     }
 
     /**
