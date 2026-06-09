@@ -14,6 +14,13 @@
                 <span class="meta-label">REPUTATION POINTS</span>
                 <span class="meta-value">★ <?= (int)($user['reputation_points'] ?? 0) ?></span>
             </div>
+
+            <div class="profile-meta-row">
+                <span class="meta-label">CONNECTIONS</span>
+                <span class="meta-value">
+                    Followers: <strong><?= (int)$followersCount ?></strong> • Following: <strong><?= (int)$followingCount ?></strong>
+                </span>
+            </div>
             
             <div class="profile-meta-row">
                 <span class="meta-label">LOCATION</span>
@@ -26,9 +33,20 @@
             </div>
         </div>
         
-        <div class="profile-footer">
+        <div class="profile-footer" style="display:flex; gap:10px; justify-content:center; align-items:center;">
             <?php if ($currentUser && (int)$currentUser['id'] === (int)$user['id']): ?>
                 <a href="<?= $baseUrl ?>/settings" class="btn btn-secondary btn-small">Edit Profile</a>
+            <?php elseif ($currentUser): ?>
+                <form action="<?= $baseUrl ?>/user/<?= htmlspecialchars($user['username']) ?>/<?= $isFollowing ? 'unfollow' : 'follow' ?>" method="POST" style="display:inline;">
+                    <button type="submit" class="btn <?= $isFollowing ? 'btn-danger' : 'btn-primary' ?> btn-small" style="padding: 0.5rem 1rem; border-radius:6px; font-weight:600; cursor:pointer;">
+                        <?= $isFollowing ? 'Unfollow' : 'Follow' ?>
+                    </button>
+                </form>
+                <form action="<?= $baseUrl ?>/user/<?= htmlspecialchars($user['username']) ?>/<?= $isBlocked ? 'unblock' : 'block' ?>" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-secondary btn-small" style="padding: 0.5rem 1rem; border-radius:6px; font-weight:600; cursor:pointer; background:#4b5563; color:#fff; border:none;">
+                        <?= $isBlocked ? 'Unblock' : 'Block' ?>
+                    </button>
+                </form>
             <?php endif; ?>
         </div>
     </div>

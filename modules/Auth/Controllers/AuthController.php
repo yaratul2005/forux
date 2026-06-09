@@ -27,7 +27,7 @@ class AuthController
     /**
      * Render the login form page.
      */
-    public function showLogin(?string $error = null): Response
+    public function showLogin(?string $error = null, ?string $success = null): Response
     {
         if ($this->auth->check()) {
             return Response::redirect('settings'); // Redirect to profile settings if already logged in
@@ -35,6 +35,7 @@ class AuthController
 
         return \Core\View::render('login', [
             'error' => $error,
+            'success' => $success,
             'title' => 'Login - Forux'
         ]);
     }
@@ -105,5 +106,89 @@ class AuthController
     {
         $this->auth->logout();
         return Response::redirect('login');
+    }
+
+    /**
+     * Render the forgot password form page.
+     */
+    public function showForgot(?string $error = null, ?string $success = null): Response
+    {
+        return \Core\View::render('forgot_password', [
+            'error' => $error,
+            'success' => $success,
+            'title' => 'Recover Password - Forux'
+        ]);
+    }
+
+    /**
+     * Process sending reset link email.
+     */
+    public function sendResetLink(): Response
+    {
+        $email = trim($this->request->input('email', ''));
+
+        if ($this->auth->sendPasswordResetLink($email)) {
+            return $this->showForgot(null, 'A password reset link has been sent to your email.');
+        }
+
+        return $this->showForgot('Unable to send password reset link. Please check the email address.');
+    }
+
+    /**
+     * Render the reset password form page.
+     */
+    public function showReset(string $token, ?string $error = null): Response
+    {
+        $email = $this->auth->validateResetToken($token);
+        if (!$email) {
+            return \Core\View::render('error', [
+                'title' => 'Invalid Token',
+                'message' => 'The password reset link is invalid or has expired.'
+            ], 400);
+        }
+
+        return \Core\View::render('reset_password', [
+            'token' => $token,
+            'error' => $error,
+            'title' => 'Reset Password - Forux'
+        ]);
+    }
+
+    /**
+     * Process actual password reset.
+     */
+    public function resetPassword(string $token): Response
+    {
+        $password = $this->request->input('password', '');
+        $passwordConfirm = $this->request->input('password_confirm', '');
+
+        if (strlen($password) < 8) {
+            return $this->showReset($token, 'Password must be at least 8 characters long.');
+        }
+
+        if ($password !== $passwordConfirm) {
+            return $this->showReset($token, 'Passwords do not match.');
+        }
+
+        if ($this->auth->resetPassword($token, $password)) {
+            return $this->showLogin(null, 'Your password has been successfully reset. You can now log in.');
+        }
+
+        return $this->showReset($token, 'Unable to reset password. Please request a new link.');
+    }
+
+    /**
+     * Process email verification.
+     */
+    public function verifyEmail(string $token): Response
+    {
+        if ($this->auth->verifyEmail($token)) {
+            return $this->showLogin(null, 'Your email has been verified. You can now log in.');
+        }
+
+        return \Core\View::render('error', [
+            'title' => 'Verification Failed',
+            'message' => 'The verification link is invalid or has expired.'
+        ], 400);
     }
 }

@@ -341,11 +341,22 @@ class ForumService
         $stmt->execute([$userId, $postId]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Fetch post author's user ID
+        $stmtAuthor = $this->pdo->prepare("SELECT user_id FROM posts WHERE id = ?");
+        $stmtAuthor->execute([$postId]);
+        $postAuthorId = (int)$stmtAuthor->fetchColumn();
+
         if ($existing) {
             if ($existing['reaction_type'] === $reactionType) {
                 // If the same type, delete/remove reaction (Toggle off)
                 $delete = $this->pdo->prepare("DELETE FROM reactions WHERE id = ?");
                 $delete->execute([$existing['id']]);
+
+                // Decrement reputation
+                if ($postAuthorId && $postAuthorId !== $userId) {
+                    $this->pdo->prepare("UPDATE users SET reputation_points = reputation_points - 1 WHERE id = ?")
+                               ->execute([$postAuthorId]);
+                }
             } else {
                 // If different type, update reaction
                 $update = $this->pdo->prepare("UPDATE reactions SET reaction_type = ? WHERE id = ?");
@@ -358,6 +369,28 @@ class ForumService
                 VALUES (?, 'post', ?, ?)
             ");
             $insert->execute([$userId, $postId, $reactionType]);
+
+            // Increment reputation
+            if ($postAuthorId && $postAuthorId !== $userId) {
+                $this->pdo->prepare("UPDATE users SET reputation_points = reputation_points + 1 WHERE id = ?")
+                           ->execute([$postAuthorId]);
+            }
+        }
+    }
+
+    /**
+     * File a report on a post.
+     */
+    public function reportPost(int $userId, int $postId, string $reason): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO reports (user_id, reportable_type, reportable_id, reason, status) 
+                VALUES (?, 'post', ?, ?, 'open')
+            ");
+            return $stmt->execute([$userId, $postId, $reason]);
+        } catch (\Throwable $e) {
+            return false;
         }
     }
 

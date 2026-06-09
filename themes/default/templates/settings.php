@@ -16,7 +16,7 @@
 
         <div class="settings-user-pill">
             <?php 
-            $avatar = 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($user['email']))) . '?d=mp&s=80';
+            $avatar = $user['avatar_url'] ?: 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($user['email']))) . '?d=mp&s=80';
             ?>
             <img src="<?= htmlspecialchars($avatar) ?>" alt="Avatar" class="settings-avatar">
             <div class="settings-user-info">
@@ -25,7 +25,12 @@
             </div>
         </div>
 
-        <form action="<?= $baseUrl ?>/settings" method="POST">
+        <form action="<?= $baseUrl ?>/settings" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="avatar">Upload Avatar</label>
+                <input type="file" id="avatar" name="avatar" class="form-control" accept="image/*">
+            </div>
+
             <div class="form-group">
                 <label for="location">Location</label>
                 <input type="text" id="location" name="location" class="form-control" value="<?= htmlspecialchars($user['location'] ?? '') ?>" placeholder="e.g. London, UK">

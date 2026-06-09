@@ -8,6 +8,12 @@
             </div>
         <?php endif; ?>
 
+        <?php if (!empty($success)): ?>
+            <div class="alert alert-success" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #10b981; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;">
+                <?= htmlspecialchars($success) ?>
+            </div>
+        <?php endif; ?>
+
         <form action="<?= $baseUrl ?>/login" method="POST">
             <div class="form-group">
                 <label for="email">Email Address</label>
@@ -23,7 +29,8 @@
         </form>
 
         <div class="auth-footer">
-            Don't have an account? <a href="<?= $baseUrl ?>/register">Register here</a>
+            Don't have an account? <a href="<?= $baseUrl ?>/register">Register here</a><br>
+            <a href="<?= $baseUrl ?>/password/reset" style="font-size: 0.85rem; margin-top: 0.5rem; display: inline-block;">Forgot password?</a>
         </div>
     </div>
 </div>

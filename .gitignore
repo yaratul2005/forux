@@ -20,6 +20,10 @@
 /storage/uploads/*
 !/storage/uploads/.gitkeep
 
+# Mail queue
+/storage/mail_queue/*
+!/storage/mail_queue/.gitkeep
+
 # Local OS files
 .DS_Store
 Thumbs.db

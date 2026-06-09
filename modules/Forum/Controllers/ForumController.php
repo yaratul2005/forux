@@ -275,4 +275,34 @@ class ForumController
             ], 500);
         }
     }
+
+    /**
+     * Process report post submit.
+     */
+    public function reportPost(int $postId): Response
+    {
+        if (!$this->auth->check()) {
+            return Response::redirect('../../login');
+        }
+
+        $user = $this->auth->user();
+        $reason = trim($this->request->input('reason', ''));
+
+        if (empty($reason)) {
+            return \Core\View::render('error', [
+                'title' => 'Validation Error',
+                'message' => 'A reason is required to submit a report.'
+            ], 400);
+        }
+
+        try {
+            $this->forumService->reportPost($user['id'], $postId, $reason);
+            return Response::redirect($_SERVER['HTTP_REFERER'] ?? '../../index.php');
+        } catch (Throwable $e) {
+            return \Core\View::render('error', [
+                'title' => 'Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

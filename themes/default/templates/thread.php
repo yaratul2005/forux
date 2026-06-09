@@ -88,6 +88,14 @@
                                     ❝ Quote
                                 </button>
 
+                                <!-- Report Action -->
+                                <button class="control-btn" onclick="reportPostAction(<?= (int)$post['id'] ?>)" style="color: #ef4444;">
+                                    ⚠ Report
+                                </button>
+                                <form id="report-form-<?= (int)$post['id'] ?>" action="<?= $baseUrl ?>/post/report/<?= (int)$post['id'] ?>" method="POST" style="display:none;">
+                                    <input type="hidden" name="reason" id="report-reason-<?= (int)$post['id'] ?>">
+                                </form>
+
                                 <!-- Owner Actions -->
                                 <?php if ((int)$post['user_id'] === (int)$currentUser['id']): ?>
                                     <a href="<?= $baseUrl ?>/post/edit/<?= (int)$post['id'] ?>" class="control-btn">✎ Edit</a>
@@ -532,6 +540,18 @@
             
             // Scroll to reply block
             document.getElementById('reply-form').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function reportPostAction(postId) {
+        var reason = prompt('Please enter the reason for reporting this post:');
+        if (reason && reason.trim().length > 0) {
+            var form = document.getElementById('report-form-' + postId);
+            var reasonInput = document.getElementById('report-reason-' + postId);
+            if (form && reasonInput) {
+                reasonInput.value = reason.trim();
+                form.submit();
+            }
         }
     }
 </script>

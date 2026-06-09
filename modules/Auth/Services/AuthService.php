@@ -19,6 +19,16 @@ class AuthService
     protected array $config;
     protected ?array $currentUser = null;
     protected bool $resolvedUser = false;
+    protected \Core\Container $container;
+
+    /**
+     * Clear resolved user cache to reload user data from DB.
+     */
+    public function refreshUser(): void
+    {
+        $this->resolvedUser = false;
+        $this->currentUser = null;
+    }
 
     /**
      * Create a new AuthService instance.
@@ -28,7 +38,8 @@ class AuthService
         $this->pdo = $pdo;
         $this->request = $request;
         $this->hook = $hook;
-        $this->config = $container->get('config');
+        $this->container = $container;
+        $this->config = $container->get('config') ?: [];
     }
 
     /**
@@ -391,6 +402,145 @@ class AuthService
             file_put_contents($logFile, $msgBlock, FILE_APPEND);
             
             throw new Exception("Too many failed login attempts. Your IP has been temporarily blocked.");
+        }
+    }
+
+    /**
+     * Send password reset link to user.
+     */
+    public function sendPasswordResetLink(string $email): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ? AND deleted_at IS NULL");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return false;
+        }
+
+        $token = bin2hex(random_bytes(32));
+        
+        $this->pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
+        $this->pdo->prepare("INSERT INTO password_resets (email, token) VALUES (?, ?)")->execute([$email, $token]);
+
+        $mailService = $this->container->get(\App\Services\Mail\MailServiceInterface::class);
+        
+        $baseUrl = rtrim($this->config['app']['url'] ?? 'http://127.0.0.1:9095', '/');
+        $resetUrl = "{$baseUrl}/password/reset/{$token}";
+
+        $subject = "Forux Password Reset Link";
+        $body = "Hi there,\n\nYou requested a password reset. Please click the link below to reset your password:\n\n{$resetUrl}\n\nIf you did not request this, please ignore this email.\n\nThanks,\nForux Team";
+
+        return $mailService->send($email, $subject, $body);
+    }
+
+    /**
+     * Validate password reset token and return associated email.
+     */
+    public function validateResetToken(string $token): ?string
+    {
+        $stmt = $this->pdo->prepare("SELECT email, created_at FROM password_resets WHERE token = ?");
+        $stmt->execute([$token]);
+        $record = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$record) {
+            return null;
+        }
+
+        // Token expires after 1 hour (3600 seconds)
+        if (strtotime($record['created_at']) + 3600 < time()) {
+            $this->pdo->prepare("DELETE FROM password_resets WHERE token = ?")->execute([$token]);
+            return null;
+        }
+
+        return $record['email'];
+    }
+
+    /**
+     * Perform password reset.
+     */
+    public function resetPassword(string $token, string $newPassword): bool
+    {
+        $email = $this->validateResetToken($token);
+        if (!$email) {
+            return false;
+        }
+
+        $hash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 12]);
+
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare("UPDATE users SET password_hash = ? WHERE email = ?");
+            $stmt->execute([$hash, $email]);
+
+            $this->pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
+            $this->pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            return false;
+        }
+    }
+
+    /**
+     * Send email verification link.
+     */
+    public function sendEmailVerification(string $email): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ? AND deleted_at IS NULL");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return false;
+        }
+
+        $token = bin2hex(random_bytes(32));
+
+        $this->pdo->prepare("DELETE FROM email_verifications WHERE email = ?")->execute([$email]);
+        $this->pdo->prepare("INSERT INTO email_verifications (email, token) VALUES (?, ?)")->execute([$email, $token]);
+
+        $mailService = $this->container->get(\App\Services\Mail\MailServiceInterface::class);
+
+        $baseUrl = rtrim($this->config['app']['url'] ?? 'http://127.0.0.1:9095', '/');
+        $verifyUrl = "{$baseUrl}/verify-email/{$token}";
+
+        $subject = "Verify Your Forux Email Account";
+        $body = "Hi there,\n\nPlease click the link below to verify your email address:\n\n{$verifyUrl}\n\nThanks,\nForux Team";
+
+        return $mailService->send($email, $subject, $body);
+    }
+
+    /**
+     * Perform email verification by token.
+     */
+    public function verifyEmail(string $token): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT email, created_at FROM email_verifications WHERE token = ?");
+        $stmt->execute([$token]);
+        $record = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$record) {
+            return false;
+        }
+
+        // Token expires after 24 hours (86400 seconds)
+        if (strtotime($record['created_at']) + 86400 < time()) {
+            $this->pdo->prepare("DELETE FROM email_verifications WHERE token = ?")->execute([$token]);
+            return false;
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare("UPDATE users SET status = 'active' WHERE email = ?");
+            $stmt->execute([$record['email']]);
+
+            $this->pdo->prepare("DELETE FROM email_verifications WHERE email = ?")->execute([$record['email']]);
+            $this->pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            return false;
         }
     }
 }
