@@ -84,7 +84,21 @@ class View
         if ($basePath === '/') {
             $basePath = '';
         }
+
+        // Dynamic base URL detection for transparent root rewrites:
+        $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+        if (false !== $pos = strpos($requestUri, '?')) {
+            $requestUri = substr($requestUri, 0, $pos);
+        }
+
         $baseUrl = $basePath;
+        if (!empty($basePath) && strpos($requestUri, $basePath) !== 0) {
+            if (preg_match('/\/public$/', $basePath)) {
+                $baseUrl = preg_replace('/\/public$/', '', $basePath);
+            } elseif ($basePath === 'public') {
+                $baseUrl = '';
+            }
+        }
 
         $siteName = $settings ? $settings->get('site_name', 'Forux') : 'Forux';
         $accentColor = $settings ? $settings->get('accent_color', '#10b981') : '#10b981';
