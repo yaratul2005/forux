@@ -62,7 +62,12 @@ if (strpos($requestUri, $themeAssetPrefix) === 0) {
 $installed = file_exists(ROOT_PATH . '/storage/installed.lock');
 if (!$installed && !isset($_GET['test'])) {
     if (file_exists(ROOT_PATH . '/install/index.php')) {
-        require_once ROOT_PATH . '/install/index.php';
+                $base = dirname($_SERVER['SCRIPT_NAME']);
+        $base = str_replace('\\', '/', $base);
+        if ($base === '/') $base = '';
+        if ($base === '/public') $base = '';
+        $base = preg_replace('/\/public$/', '', $base);
+        header('Location: ' . $base . '/install/index.php');
         exit;
     } else {
         die('Forux is not installed, and the installation wizard was not found. Please upload the install/ folder.');
