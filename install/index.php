@@ -531,7 +531,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h3>2. Database Configuration</h3>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:-0.5rem; margin-bottom:1.5rem;">Enter database connection details. These will be encrypted and written to <code>config/config.php</code>.</p>
             
-            <form action="index.php?step=<?php echo (int)$step; ?>" method="POST">
+            <form action="index.php?step=<?php echo htmlentities((string)$step); ?>" method="POST">
                 <div class="form-group">
                     <label>Database Host</label>
                     <input type="text" name="db_host" class="form-control" value="127.0.0.1" required>
@@ -575,7 +575,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div style="color: #9ca3af;">- 008_create_credentials_vault_table.php</div>
             </div>
 
-            <form action="index.php?step=<?php echo (int)$step; ?>" method="POST">
+            <form action="index.php?step=<?php echo htmlentities((string)$step); ?>" method="POST">
                 <button type="submit" class="btn">Execute Migrations</button>
             </form>
 
@@ -584,7 +584,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h3>4. Super Admin Configuration</h3>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:-0.5rem; margin-bottom:1.5rem;">Create the primary administrative account which will have full owner privileges.</p>
             
-            <form action="index.php?step=<?php echo (int)$step; ?>" method="POST">
+            <form action="index.php?step=<?php echo htmlentities((string)$step); ?>" method="POST">
                 <div class="form-group">
                     <label>Admin Username</label>
                     <input type="text" name="admin_user" class="form-control" placeholder="e.g. admin" required>
