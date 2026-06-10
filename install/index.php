@@ -13,7 +13,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // 1. Enforce installed.lock security check
-if (file_exists(ROOT_PATH . '/storage/installed.lock')) {
+$step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
+if ($step !== 5 && file_exists(ROOT_PATH . '/storage/installed.lock')) {
     http_response_code(403);
     die('<!DOCTYPE html>
     <html lang="en">
@@ -37,7 +38,6 @@ if (file_exists(ROOT_PATH . '/storage/installed.lock')) {
 }
 
 // Determine active step
-$step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
 $error = '';
 $success = '';
 
@@ -614,7 +614,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 2rem;">
                     Forux Forum has been successfully installed on your host. For security, the installer has been locked out.
                 </p>
-                <button onclick="window.location.href='index.php'" class="btn">Go to Forum Homepage</button>
+                <button onclick="window.location.href='../'" class="btn">Go to Forum Homepage</button>
             </div>
         <?php endif; ?>
     </div>
