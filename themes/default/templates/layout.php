@@ -265,7 +265,11 @@
         <div class="nav-links">
             <a href="<?= $baseUrl ?>/">Forum</a>
             <?php if ($currentUser): ?>
-                <a href="<?= $baseUrl ?>/settings">Settings</a>
+                <?php $avatar = $currentUser['avatar_url'] ?: 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($currentUser['email']))) . '?d=mp&s=32'; ?>
+                <div style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.05); padding:0.35rem 0.75rem; border-radius:30px;">
+                    <img src="<?= htmlspecialchars($avatar) ?>" alt="Avatar" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">
+                    <a href="<?= $baseUrl ?>/user/<?= htmlspecialchars($currentUser['username']) ?>" style="font-weight:600; font-size:0.85rem;">@<?= htmlspecialchars($currentUser['username']) ?></a>
+                </div>
                 <a href="#" style="position: relative;" id="notification-bell" aria-label="View notifications">
                     Notifications
                     <span class="badge" id="notification-badge" style="display: <?= $unreadNotificationsCount > 0 ? 'inline-block' : 'none' ?>;">
