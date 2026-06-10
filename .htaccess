@@ -6,7 +6,7 @@
     Options -Indexes
 
     # Block direct access to internal PHP/code directories
-    RewriteRule ^(app|core|modules|storage|config|lang|install)/.*$ - [F,L]
+    RewriteRule ^(app|core|modules|storage|config|lang)/.*$ - [F,L]
 
     # Block direct access to PHP templates inside themes/ (assets are allowed)
     RewriteRule ^themes/.*\.php$ - [F,L]
@@ -23,6 +23,7 @@
     # Route all other requests to the public/ front controller
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_URI} !^/install/
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ public/index.php [L,QSA]
 </IfModule>
